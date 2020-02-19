@@ -8,7 +8,7 @@ params.class_type = "residuum"
 params.y_variable = "Residual"
 
 // Folders
-output_folder = "mnt/data4/tlazard/AutomaticWSI/outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
+output_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 output_folder = "${output_folder}/Weldon_R${r}"
 
 // label
@@ -46,6 +46,7 @@ process TrainingWeldon {
     maxRetries 6
     queue 'gpu-cbio'
     clusterOptions "--gres=gpu:1"
+	maxFork 1
 
     input:
     file images from encoded_bags .collect() 
