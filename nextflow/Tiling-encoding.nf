@@ -33,7 +33,7 @@ process WsiTilingEncoding {
     each level from levels
     
     output:
-    file("${name}.npy")
+    file("${name}.npy") into bags
     set val("$level"), file("${name}_mean.npy") into mean_patient
     file("${name}_info.txt")
     file("${name}_visu.png")
@@ -75,3 +75,44 @@ process ComputeGlobalMean {
     python $compute_mean
     """
 }
+
+process Incremental_PCA {
+    publishDir "${output_process_pca}", overwrite: true
+    memory '60GB'
+    cpus '16'
+
+    input:
+    file images from bags .collect()
+
+    output:
+    file("*.joblib") into results_PCA
+
+    script:
+    output_process_pca = "${output_folder}/tiling/${level}/pca"
+    python_script = file("./python/preparing/pca_partial.py")
+
+    """
+    python $python_script --path "${params.input_tiles}"
+    """
+}
+
+process Transform_Tiles {
+    publishDir "${output_mat_pca}", overwrite: true
+    memory '60GB'
+
+    input:
+    file images from bags
+    each file(res) from results_PCA
+
+    output:
+    file '*.npy' into transform_tiles
+
+    script:
+    output_mat_pca = "${output_folder}/tiling/$level/mat_pca"
+    python_script = file("./python/preparing/transform_tile.py")
+
+    """
+    python ${python_script} --path $images --pca $res
+    """
+}
+

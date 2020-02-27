@@ -258,6 +258,7 @@ def pj_fetch(name, table, size):
 
     If the slide has a number of tiles different than slide, then we sample uniformly `size` tiles
     among the available tiles. --> Why not sample all the cases in a Uniform ?
+    
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!                                                                   !!!!!!!!!!!!!!!
     !!!!!!!!!!!!!      Changer name par index                                       !!!!!!!!!!!!!!!

@@ -1,6 +1,6 @@
 # mask otsu for deriving the patients tissue from an approximate mask.
 
-
+#%%
 import os
 
 from math import floor, ceil
@@ -13,7 +13,7 @@ from skimage.color import rgb2gray
 from skimage.exposure import histogram
 from skimage._shared.utils import warn
 
-
+#%%
 def threshold_otsu(image, mask, nbins=256):
     """Return threshold value based on Otsu's method.
     Parameters
@@ -86,7 +86,7 @@ def closest_int(float_string, maximum):
     res = int(res)
     res = min(maximum - 1, max(0, res))
     return res
-
+#%%
 def make_label(xml_file, rgb_img):
     """ parsers the xml file into a pandas dataframe"""
 
@@ -108,6 +108,7 @@ def make_label(xml_file, rgb_img):
 
     return res
 
+#%%
 to_light_images = ["565330", 
                    "556426",
                    "555029",
