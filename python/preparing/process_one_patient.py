@@ -45,7 +45,7 @@ def main():
     args = get_options()
 
     model = prep_model(args.weight)
-    mask_level = open_image(args.slide).level_count - 2
+    mask_level = 3
     analyse_level = args.analyse_level
 
     info, encoded = encode_patient(args.slide, args.xml_file, analyse_level, mask_level, model)
