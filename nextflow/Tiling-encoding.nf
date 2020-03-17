@@ -161,21 +161,21 @@ process Transform_Tiles {
 transform_tiles  .groupTuple() 
               .set { transform_tiles_per_level }
 
-process ComputePCAGlobalMean {
-    publishDir "${output_pca_mean}", overwrite: true
-    memory { 10.GB }
-
-    input:
-    set level, file(_) from transform_tiles_per_level
-    output:
-    file('mean.npy')
-
-    script:
-    output_pca_mean = "${output_folder}/tiling/$level/pca_mean"
-    compute_mean_pca = file('./python/preparing/compute_mean_pca.py')
-
-    """
-    echo $level
-    python $compute_mean_pca
-    """
-}
+//process ComputePCAGlobalMean {
+//    publishDir "${output_pca_mean}", overwrite: true
+//    memory { 10.GB }
+//
+//    input:
+//    set level, file(_) from transform_tiles_per_level
+//    output:
+//    file('mean.npy')
+//
+//    script:
+//    output_pca_mean = "${output_folder}/tiling/$level/pca_mean"
+//    compute_mean_pca = file('./python/preparing/compute_mean_pca.py')
+//
+//    """
+//    echo $level
+//    python $compute_mean_pca
+//    """
+//}

@@ -12,7 +12,7 @@ from skimage.color import rgb2gray
 
 from skimage.exposure import histogram
 from skimage._shared.utils import warn
-
+import ipdb
 
 def threshold_otsu(image, mask, nbins=256):
     """Return threshold value based on Otsu's method.
