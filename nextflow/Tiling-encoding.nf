@@ -140,8 +140,8 @@ results_PCA .combine(bags_2, by: 0)
 
 process Transform_Tiles {
 
-    publishDir "${output_mat_pca}", overwrite: true
-    memory '60GB'
+    publishDir "${output_mat_pca}", overwrite: true, mode: 'copy'
+    memory '5GB'
 
     input:
     tuple level, file(pca), tile from files_to_transform
@@ -161,6 +161,7 @@ process Transform_Tiles {
 transform_tiles  .groupTuple() 
               .set { transform_tiles_per_level }
 
+<<<<<<< HEAD
 //process ComputePCAGlobalMean {
 //    publishDir "${output_pca_mean}", overwrite: true
 //    memory { 10.GB }
@@ -179,3 +180,23 @@ transform_tiles  .groupTuple()
 //    python $compute_mean_pca
 //    """
 //}
+=======
+process ComputePCAGlobalMean {
+    publishDir "${output_pca_mean}", overwrite: true, mode: 'copy'
+    memory { 10.GB }
+
+    input:
+    set level, file(_) from transform_tiles_per_level
+    output:
+    file('mean.npy')
+
+    script:
+    output_pca_mean = "${output_folder}/tiling/$level/pca_mean"
+    compute_mean_pca = file('./python/preparing/compute_mean_pca.py')
+
+    """
+    echo $level
+    python $compute_mean_pca
+    """
+}
+>>>>>>> peter
