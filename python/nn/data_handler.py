@@ -71,8 +71,8 @@ def add_index(table, index):
     """
     index_table = pd.DataFrame.from_dict(index).T
     index_table.columns = ["start", "end"]
-    index_table["Biopsy"] = index_table.apply(lambda x: x.name.split('.')[0].split('/')[-1], axis=1)
-    table = pd.merge(table, index_table, on='Biopsy')
+    index_table["ID"] = index_table.apply(lambda x: x, axis=1)
+    table = pd.merge(table, index_table, on='ID')
     return table
 
 def set_table(table, fold_test, inner_number_folds, index_table, y_name):
@@ -143,17 +143,18 @@ def load_concatenated_data(files, depth, mean):
     list_table = {} 
     last_index = 0
     for f in tqdm(files):
+        name, _ = os.path.splitext(os.path.basename(f))
         mat = load(f, depth) - mean[:depth]
         n_i = mat.shape[0]
-        index_file[f] = [last_index, last_index + n_i]
+        index_file[name] = [last_index, last_index + n_i]
         last_index += n_i
         list_table[f] = mat
 
     # I removed np concatenate, so that the following code is better optimised in RAM
-    n, p = mat.shape
-    data = np.zeros(shape=(last_index, p), dtype='float32')
+    data = np.zeros(shape=(last_index, depth), dtype='float32')
     for f in tqdm(files):
-        b_idx, l_idx = index_file[f]
+        name, _ = os.path.splitext(os.path.basename(f))
+        b_idx, l_idx = index_file[name]
         data[b_idx:l_idx] = list_table[f]
         del list_table[f]
 
