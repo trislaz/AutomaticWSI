@@ -58,6 +58,8 @@ def get_options():
     parser.add_argument('--workers', default=5, required=False,
                         metavar="int", type=int,
                         help='number of workers')
+    parser.add_argument('--total_folds', required=False, type=int,
+                        help='number of division of the whole dataset to create test_set', default=10)
     args = parser.parse_args()
 
     if args.gaussian_noise == 0:

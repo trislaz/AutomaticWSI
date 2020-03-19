@@ -75,7 +75,12 @@ def add_index(table, index):
     table = pd.merge(table, index_table, on='ID')
     return table
 
-def set_table(table, fold_test, inner_number_folds, index_table, y_name):
+def add_fold_number(table, total_folds):
+    size = table.shape[0]
+    table['fold'] = table.apply(lambda x: x.name // (size // total_folds-1), axis = 1)
+    return table
+
+def set_table(table, total_folds, fold_test, inner_number_folds, index_table, y_name):
     """ Set the table containing the data information
 
     Set the table by adding to each entry (patient) its start and end indexes in the concatenated data object.
@@ -90,6 +95,8 @@ def set_table(table, fold_test, inner_number_folds, index_table, y_name):
     ----------
     table : pd.DataFrame
         data information.
+    total_folds : int
+        total number of folds, will appear in table.
     fold_test : int
         number of the fold which will be used for testing.
     inner_number_folds : int
@@ -108,6 +115,8 @@ def set_table(table, fold_test, inner_number_folds, index_table, y_name):
     """
     ## add index_table to table so that all the info is in table 
     table = add_index(table, index_table)
+    table = add_fold_number(table, total_folds)
+    table[y_name] = pd.factorize(table[y_name])[0]
     train_table = table[table["fold"] != fold_test]
     test_index = table[table["fold"] == fold_test].index
     stratified_variable = train_table[y_name].round(0)
@@ -203,7 +212,8 @@ class data_handler:
         data, index_file = load_concatenated_data(files=files, depth=depth, mean=mean)
 
         self.data = data
-        table, obj, test_index = set_table(table, fold_test, 
+        total_folds = options.total_folds
+        table, obj, test_index = set_table(table, total_folds, fold_test, 
                                            inner_fold, 
                                            index_file, options.y_interest)
         self.table = table
