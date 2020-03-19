@@ -7,6 +7,7 @@ from data_handler import data_handler
 from model_definition import load_model
 from evaluate_nn import evaluate_model
 import ipdb
+import os
 
 import tensorflow as tf
 from keras import backend as K
@@ -124,13 +125,13 @@ def fill_table(history, val_scores, scores, table, parameter_dic, validation_num
 
 def main():
 
-    config = tf.ConfigProto(log_device_placement=False)
-    config.gpu_options.allow_growth = True
-    K.tensorflow_backend.set_session(tf.Session(config=config))
+    #config = tf.compat.v1.ConfigProto(log_device_placement=False)
+    #config.gpu_options.allow_growth = True
+    #tf.compat.v1.keras.backend.get_session(tf.compat.v1.Session(config=config))
 
     options = get_options()
     mean = options.mean_name
-    path = options.path
+    path = os.path.join(options.path, '*.npy')
     fold_test = options.fold_test - 1 
     table_name = options.table
     batch_size = options.batch_size
@@ -176,7 +177,7 @@ def main():
             print("Cleaning up")
             results_table = fill_table(history, scores, scores_val, results_table, parameter_dic, j, options)
 
-            K.clear_session()
+            #tf.compat.v1.keras.backend.clear_session()
             del model
             results_table.to_csv(options.output_name, index=False)
             predictions.to_csv("predictions_run_{}_fold_test_{}.csv".format(options.run, options.fold_test))

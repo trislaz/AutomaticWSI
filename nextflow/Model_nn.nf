@@ -1,63 +1,54 @@
 #!/usr/bin/env nextflow
 
-params.PROJECT_NAME = "TEST"
-params.PROJECT_VERSION = "1-0"
+params.PROJECT_NAME = "tcga_tnbc"
+params.PROJECT_VERSION = "tri"
 params.resolution = "2"
 r = params.resolution
-params.y_interest = "Residual"
+params.y_interest = "LST_status"
 
 // Folders
 input_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 output_folder = "${input_folder}/Model_NN_R${r}"
 
-// label
-params.label = "/mnt/data3/pnaylor/CellularHeatmaps/outputs/label.csv"
-label = file(params.label)
+// labels
+params.label_file = "/mnt/data4/tlazard/data/tcga_tnbc/labels_tcga_tnbc.csv"
+label_file = file(params.label_file)
 
-params.input_tiles = "${input_folder}/tiling/${r}/mat/"
+// Arguments
+params.input_tiles = "${input_folder}/tiling/${r}/mat_pca/"
 input_tiles = file(params.input_tiles)
-params.mean = "${input_folder}/tiling/${r}/mean/mean.npy"
-mean_tile = file(params.mean)
-
-
-
+params.mean_file = "${input_folder}/tiling/${r}/mean_pca/mean.npy"
+mean_file = file(params.mean_file)
+params.inner_fold = 5
 inner_fold =  params.inner_fold
-gaussian_noise = [0]//, 1]
 batch_size = 16
 epochs = 40
 repeat = 4
 params.size = 5000
 size = params.size
-input_depth = 1024
-params.number_of_folds
+params.number_of_folds = 10
 number_of_folds = params.number_of_folds 
-pooling_layer = ["avg"]//, "max"]
-
-model_types = ["model_1S_a", "model_1S_b", "model_1S_c", "model_1S_d", "owkin"]
-
-//mean_file = mean_file .view()
+params.model = "conan_a"
+model = params.model
 
 process Training_nn {
     publishDir "${output_model_folder}", pattern: "*.h5", overwrite: true
     publishDir "${output_results_folder}", pattern: "*.csv", overwrite: true
     memory { 30.GB + 5.GB * (task.attempt - 1) }
-    // errorStrategy 'retry'
-    // maxRetries 6
+    errorStrategy 'retry'
+    maxRetries 6
     cpus 5
-    queue 'gpu-cbio'
+    queue 'gpu-cmm'
     clusterOptions "--gres=gpu:1"
     // scratch true
     stageInMode 'copy'
 
     input:
     file path from input_tiles 
-    file mean from mean_tile
-    file lab from label
     each fold from 1..number_of_folds
-    each model from model_types
 
     output:
-    tuple val("${fold}"), file("*.csv") into results_weldon
+    tuple val("${fold}"), file("*.csv") into results
     file("*.h5")
 
     script:
@@ -68,9 +59,9 @@ process Training_nn {
     /* Mettre --table --repeat --class_type en valeur par défaut ? */
     """
     module load cuda10.0
-    python $python_script --mean_name $mean \
-                          --path "${path}/*.npy" \
-                          --table $lab \
+    python $python_script --mean_name $mean_file \
+                          --path $path \
+                          --table $label_file \
                           --batch_size $batch_size \
                           --epochs $epochs \
                           --size $size \

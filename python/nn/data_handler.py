@@ -71,7 +71,7 @@ def add_index(table, index):
     """
     index_table = pd.DataFrame.from_dict(index).T
     index_table.columns = ["start", "end"]
-    index_table["ID"] = index_table.apply(lambda x: x, axis=1)
+    index_table["ID"] = index_table.apply(lambda x: x.name, axis=1)
     table = pd.merge(table, index_table, on='ID')
     return table
 
@@ -180,7 +180,7 @@ def file_is_in_labels(files, table):
         name = os.path.basename(f).split('.')[0]
         names.append(name)
     files = zip(names, files)
-    labels_name = set(table['Biopsy'])
+    labels_name = set(table['ID'])
     filtered_files = [x[1] for x in files if x[0] in labels_name]
     return filtered_files
 
