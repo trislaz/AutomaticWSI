@@ -433,7 +433,7 @@ def load_model(parameter_dic, options, verbose=True):
         Optimizername not known
     """
 
-    if options.y_interest in ["Residual", "Prognostic"]:
+    if options.y_interest in ["Residual", "Prognostic", "LST_status"]:
         n_classes = 2
     else:
         n_classes = 4
