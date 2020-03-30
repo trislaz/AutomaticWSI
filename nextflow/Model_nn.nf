@@ -38,7 +38,7 @@ process Training_nn {
     errorStrategy 'retry'
     maxRetries 6
     cpus 5
-    queue 'gpu-cmm'
+    queue 'gpu-cbio'
     clusterOptions "--gres=gpu:1"
     // scratch true
     stageInMode 'copy'
