@@ -1,5 +1,5 @@
 
-from sklearn.metrics import (accuracy_score, roc_auc_score, 
+from sklearn.metrics import (accuracy_score,  
                              log_loss, f1_score, precision_score,
                               recall_score)
         
@@ -15,12 +15,12 @@ def evaluate_model(model, dg,
                                      verbose=verbose)
 
     acc_ = accuracy_score(y_true, y_pred[:,1].round(0))
-    auc_ = roc_auc_score(y_true, y_pred[:,1]) 
+    #auc_ = roc_auc_score(y_true, y_pred[:,1]) 
     l_loss = log_loss(y_true, y_pred) 
     recall = recall_score(y_true, y_pred[:,1].round(0)) 
     precision = precision_score(y_true, y_pred[:,1].round(0)) 
     f1 = f1_score(y_true, y_pred[:,1].round(0)) 
-    scores = [l_loss, acc_, recall, precision, f1, auc_]
+    scores = [l_loss, acc_, recall, precision, f1]
     
     return scores, y_pred
     

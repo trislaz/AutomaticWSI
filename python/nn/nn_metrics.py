@@ -58,4 +58,4 @@ def f1(y_true, y_pred):
 #        return value
 
 def import_metrics():
-    return ["accuracy", recall, precision, f1]
+    return ["acc", recall, precision, f1]

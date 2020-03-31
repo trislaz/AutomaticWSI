@@ -180,7 +180,7 @@ def save_result(y_true, y_pred, y_prob):
     scores = list(compute_score(y_true, y_pred, y_prob))
     cm = scores[-1]
     del scores[-1]
-    for i, sc in enumerate(["acc", "f1", "recall", "auc", "prec"]):
+    for i, sc in enumerate(["acc", "f1", "recall", "prec"]):
         file = open("{}.txt".format(sc), "w") # acc score 
         score = scores[i]
         file.write(str(score)) 

@@ -8,6 +8,7 @@ from model_definition import load_model
 from evaluate_nn import evaluate_model
 import ipdb
 import os
+#from tensorboardX import SummaryWriter
 
 import tensorflow as tf
 from keras import backend as K
@@ -101,7 +102,7 @@ def trunc_if_possible(el):
         return el
 
 def fill_table(history, val_scores, scores, table, parameter_dic, validation_number, options):
-    train_values = ['loss', 'accuracy', 'recall', 'precision', 'f1']
+    train_values = ['loss', 'acc', 'recall', 'precision', 'f1']
     val_values = ['val_' + el for el in train_values]
     test_values = ['test_' + el for el in train_values]
     parameters_values = list(parameter_dic.keys())
@@ -135,15 +136,16 @@ def main():
     fold_test = options.fold_test - 1 
     table_name = options.table
     batch_size = options.batch_size
-    
+
+    #Writer
 
     ### data business
     data = data_handler(path, fold_test, 
                         table_name, options.inner_folds, 
                         batch_size, mean, options)
-    columns = ['loss', 'accuracy', 'recall', 'precision', 'f1',
-               'val_loss', 'val_accuracy', 'val_recall', 'val_precision', 'val_f1', 
-                'test_loss', 'test_accuracy', 'test_recall', 'test_precision', 
+    columns = ['loss', 'acc', 'recall', 'precision', 'f1',
+               'val_loss', 'val_acc', 'val_recall', 'val_precision', 'val_f1', 
+                'test_loss', 'test_acc', 'test_recall', 'test_precision', 
                 'test_f1', 
                 'hidden_btleneck', 'hidden_fcn', 'drop_out', 
                 'validation_fold', 'learning_rate', 'weight_decay', 
