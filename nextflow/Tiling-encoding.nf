@@ -7,8 +7,15 @@ output_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 params.tiff_location = "/mnt/data3/pnaylor/Data/Biopsy" // tiff files to process
 params.tissue_bound_annot = "/mnt/data3/pnaylor/Data/Biopsy/tissue_segmentation" // xml folder containing tissue segmentation mask for each patient
 
+params.model_name = 'simCLR'
+model_name = params.model_name
+params.model_path = '/mnt/data4/tlazard/projets/simCLR/peter_biopsies/512/1/'
+model_path = params.model_path
+params.size = '512'
+size = params.size
+
 // input file
-tiff_files = file(params.tiff_location + "/*.svs")
+tiff_files = file(params.tiff_location + "/*.tiff")
 boundaries_files = file(params.tissue_bound_annot)
 
 //params.label = "/mnt/data3/pnaylor/CellularHeatmaps/outputs/label.csv"
@@ -19,7 +26,7 @@ params.weights = "imagenet"
 weights = params.weights
 
 params.innner_fold = 5
-levels = [0, 1, 2]
+levels = [1]
 
 process WsiTilingEncoding {
     publishDir "${output_process_mat}", overwrite: true, pattern: "${name}.npy"
@@ -56,6 +63,9 @@ process WsiTilingEncoding {
                --xml_file $xml_file \
                --analyse_level $level \
                --weight $weights
+               --model_name $model_name \
+               --model_path $model_path \
+               --size $size
     """
 }
 
