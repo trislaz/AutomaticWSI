@@ -47,7 +47,7 @@ def get_biggest_epoch(path):
     files = glob(os.path.join(path, 'checkpoint*'))
     epochs = []
     for f in files:
-        n, _ = os.path.splitext((f.split('_')[1]))
+        n, _ = os.path.splitext((f.split('_')[-1]))
         epochs.append(int(n))
     return 'checkpoint_{}.tar'.format(np.max(epochs))
 

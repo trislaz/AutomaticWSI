@@ -60,9 +60,11 @@ def wsi_analysis(args, image, model, list_roi):
         res = np.zeros((n, 2048))
         for o, para in enumerate(list_roi):
             img = get_image(image, para, numpy=False)
+            img = img.convert('RGB')
             img = transforms.ToTensor()(img)
-            img.to(args.device)
-            sample = img, image
+            img = img.unsqueeze(0)
+            img = img.to(args.device)
+            sample = img
             with torch.no_grad():
                 h, _ = model(sample)
             h = h.cpu().numpy()

@@ -1,18 +1,19 @@
 #!/usr/bin/env nextflow
 
-params.PROJECT_NAME = "tcga_tnbc"
-params.PROJECT_VERSION = "tri"
-params.resolution = [0, 1, 2]
+params.PROJECT_NAME = "biopsies_pet"
+params.PROJECT_VERSION = "simCLR"
+params.resolution = [1]
 r = params.resolution
-params.y_interest = "LST_status"
+params.y_interest = "Residual"
 
 // Folders
 input_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 
 // labels
-params.label_file = "/mnt/data4/tlazard/data/tcga_tnbc/labels_tcga_tnbc.csv"
+params.label_file = "/mnt/data3/pnaylor/CellularHeatmaps/outputs/label_20_02_20.csv"
 label_file = file(params.label_file)
-
+input_tiles = file("${input_folder}/tiling/simCLR/1/mat/")
+mean_file = file("${input_folder}/tiling/simCLR/1/mean/mean.npy")
 // Arguments
 params.inner_fold = 5
 inner_fold =  params.inner_fold
@@ -33,7 +34,7 @@ process Training_nn {
     errorStrategy 'retry'
     maxRetries 6
     cpus 5
-    maxForks 6
+    maxForks 4
     queue 'gpu-cbio'
     clusterOptions "--gres=gpu:1"
     // scratch true
@@ -48,10 +49,8 @@ process Training_nn {
     file("*.h5")
 
     script:
-    input_tiles = file("${input_folder}/tiling/${r}/mat_pca/")
-    mean_file = file("${input_folder}/tiling/${r}/mean_pca/mean.npy")
     python_script = file("./python/nn/main.py")
-    output_folder = "${input_folder}/Model_nn_R${r}"
+    output_folder = "${input_folder}/simCLR/1/Model_nn/"
     output_model_folder = file("${output_folder}/${model}/models/")
     output_results_folder = file("${output_folder}/${model}/results/")
 
@@ -73,3 +72,4 @@ process Training_nn {
     """
 }
 
+    
