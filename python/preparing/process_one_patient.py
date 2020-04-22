@@ -32,17 +32,25 @@ def get_options():
     parser.add_argument('--weight', required=True,
                         metavar="str", type=str,
                         help='path to weight')
-    parser.add_argument("--xml_file", required=True,
+    parser.add_argument("--mask", required=True,
                         metavar="str", type=str,
-                        help="xml file giving the tissue segmentation of the patient tissue")
+                        help="mask file giving the tissue segmentation of the patient tissue")
     parser.add_argument("--model_name", default='imagenet',
                         type=str, help='Model to encode tile: imagenet | simCLR')
     parser.add_argument("--model_path", default='.',
                         type=str, help='Path where we can find the model .tar in case of simCLR')
     parser.add_argument("--size", default=224,
                         type=int, help='size of patches to encode in pixels')
+    parser.add_argument("--auto_mask", default=0,
+                        type=int, help='if 0, the masks have to be defined by xml files, if 1, \
+                        by a numpy array (automask using otsu')
     args = parser.parse_args()
     args.device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
+    if args.auto_mask:
+        args.mask = args.mask + '.npy'
+    else:
+        args.mask = args.mask + '.xml'
+    args.mask_level = 5
 
     return args
 
@@ -51,12 +59,12 @@ def main():
 
     args = get_options()
     slide = open_image(args.slide)
-    mask_level = slide.level_count - 2
+    mask_level = args.mask_level 
 
     model = prep_model(args)
     info, encoded = encode_patient(args=args, mask_level=mask_level, model=model)
 
-    name, extension = os.path.splitext(os.path.basename(args.slide))
+    name, _ = os.path.splitext(os.path.basename(args.slide))
     name_encoded = name + '.npy'
     name_mean = name + '_mean.npy'
     name_visu = name + '_visu.png'

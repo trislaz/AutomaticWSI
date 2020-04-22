@@ -1,6 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 import torch
+import os
 from torchvision import transforms
 
 from mask_otsu import make_label_with_otsu
@@ -79,7 +80,7 @@ list_ = [475797, 479160, 481545, 548658, 542213, 534477,
 no_list = ["{}.tiff".format(el) for el in list_]
 
 
-def generate_tiles(args, image, level, mask_level, xml_file):
+def generate_tiles(args, image, level, mask_level):
     """
     Loads a folder of numpy array into a dictionnary.
     Parameters
@@ -95,11 +96,9 @@ def generate_tiles(args, image, level, mask_level, xml_file):
     A list of parameters corresponding to the tiles in image.
     """
 
-    def load_gt(img):
-        lbl = make_label_with_otsu(xml_file, img)
-        return lbl
+
     ## Options regarding the mask creationg, which level to apply the function.
-    options_applying_mask = {'mask_level': mask_level, 'mask_function': load_gt}
+    options_applying_mask = {'mask_level': mask_level, 'mask_function': get_mask_function(args)}
 
     ## Options regarding the sampling. Method, level, size, if overlapping or not.
     ## You can even use custom functions. Tolerance for the mask segmentation.
@@ -107,7 +106,7 @@ def generate_tiles(args, image, level, mask_level, xml_file):
     ## n_samples and with replacement are for the methods random_patch
     options_sampling = {'sampling_method': "grid", 'analyse_level': level, 
                         'patch_size': (args.size, args.size), 'overlapping': 0, 
-                        'list_func': [check_for_white], 'mask_tolerance': 0.3,
+                        'list_func': [check_for_white], 'mask_tolerance': 0.9,
                         'allow_overlapping': False, 'n_samples': 100, 'with_replacement': False}
 
     roi_options = dict(options_applying_mask, **options_sampling)
@@ -134,8 +133,20 @@ def encode_patient(args, mask_level, model):
     A tuple where the first element corresponds to the tile extraction
     information and the second to the corresponding encoding.
     """
-    image, analyse_level, xml = args.slide, args.analyse_level, args.xml_file
-    list_roi = generate_tiles(args, image, analyse_level, mask_level, xml)
+    image, analyse_level = args.slide, args.analyse_level
+    list_roi = generate_tiles(args, image, analyse_level, mask_level)
     encoded_images = wsi_analysis(args, image, model, list_roi)
 
     return list_roi, encoded_images
+
+def get_mask_function(args):
+    if args.auto_mask: # Mask generated with otsu and morpho
+        def mask_function(img):
+            mask = np.load(args.mask)
+            if len(mask.shape) > 2:
+                mask = mask.max(2)
+            return mask
+    else:
+        def mask_function(img):
+            return make_label_with_otsu(args.mask, img)
+    return mask_function
