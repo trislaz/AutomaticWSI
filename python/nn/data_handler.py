@@ -115,7 +115,7 @@ def set_table(table, total_folds, fold_test, inner_number_folds, index_table, y_
     """
     ## add index_table to table so that all the info is in table 
     table = add_index(table, index_table)
-    table = add_fold_number(table, total_folds)
+    #table = add_fold_number(table, total_folds)
     table[y_name] = pd.factorize(table[y_name])[0]
     train_table = table[table["fold"] != fold_test]
     test_index = table[table["fold"] == fold_test].index
@@ -204,9 +204,10 @@ class data_handler:
     def __init__(self, path, fold_test, table_name, 
                  inner_fold, batch_size, 
                  mean, options):
-        files = glob(path)
+        files = glob(os.path.join(path, '*.npy'))
         depth = options.input_depth
         mean = np.load(mean).astype("float32")
+
         table = pd.read_csv(table_name)
         files = file_is_in_labels(files, table)
         data, index_file = load_concatenated_data(files=files, depth=depth, mean=mean)

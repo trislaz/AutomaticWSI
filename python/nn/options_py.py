@@ -60,6 +60,7 @@ def get_options():
                         help='number of workers')
     parser.add_argument('--total_folds', required=False, type=int,
                         help='number of division of the whole dataset to create test_set', default=10)
+    parser.add_argument('--input_depth', type=int, default=256, help='size of the feature space')
     args = parser.parse_args()
 
     if args.gaussian_noise == 0:
@@ -71,7 +72,6 @@ def get_options():
     args.max_queue_size = 10
     args.use_multiprocessing = args.multi_processing == 1
     print(args.use_multiprocessing)
-    args.input_depth = 256 # 512
 
     args.learning_rate_start = -6
     args.learning_rate_stop = 1

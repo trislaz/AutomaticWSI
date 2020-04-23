@@ -14,7 +14,7 @@ def evaluate_model(model, dg,
                                      use_multiprocessing=use_multiprocessing, 
                                      verbose=verbose)
 
-    acc_ = accuracy_score(y_true, y_pred[:,1].round(0))
+    acc_ = accuracy_score(y_true, y_pred[:,1].round())
     #auc_ = roc_auc_score(y_true, y_pred[:,1]) 
     l_loss = log_loss(y_true, y_pred) 
     recall = recall_score(y_true, y_pred[:,1].round(0)) 

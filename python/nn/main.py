@@ -7,20 +7,18 @@ from data_handler import data_handler
 from model_definition import load_model
 from evaluate_nn import evaluate_model
 import ipdb
-import os
-#from tensorboardX import SummaryWriter
 
 import tensorflow as tf
 from keras import backend as K
 
-
+#%%
 def log_sample(a, b):
     assert a <= b
     unit = random.randint(1, 10)
     power = random.randint(a, b)
     return unit * 10 ** power
 
-
+#%%
 def sample_hyperparameters(options, validation_fold):
     """ Samples hyperparameters: 
     learning_rate, weight_decay, gaussian_noise, drop_out, hidden_fcn, hidden_btleneck, validation fold.
@@ -40,12 +38,12 @@ def sample_hyperparameters(options, validation_fold):
         dictionary containing all the values cited above. Keys are the name written in the description.
     """
     dic = {}
-    dic["learning_rate"] = log_sample(options.learning_rate_start, options.learning_rate_stop)
-    dic["weight_decay"] = log_sample(options.weight_decay_start, options.weight_decay_stop)
+    dic["learning_rate"] = 0.001#log_sample(options.learning_rate_start, options.learning_rate_stop)
+    dic["weight_decay"] = 0.001#log_sample(options.weight_decay_start, options.weight_decay_stop)
     dic["gaussian_noise"] = random.uniform() if options.gaussian_noise else 0
-    dic["drop_out"] = random.uniform(low=0.0, high=0.5)
-    dic["hidden_fcn"] = random.choice(options.hidden_fcn_list)
-    dic["hidden_btleneck"] = random.choice(options.hidden_btleneck_list)
+    dic["drop_out"] = 0.001#random.uniform(low=0.0, high=0.5)
+    dic["hidden_fcn"] = 128#andom.choice(options.hidden_fcn_list)
+    dic["hidden_btleneck"] = 64#random.choice(options.hidden_btleneck_list)
     return dic
 
 def call_backs(options):
@@ -66,7 +64,6 @@ def train_model(model, dg_train, dg_val, class_weight, options):
                                   use_multiprocessing=options.use_multiprocessing)#,
                                   #verbose=2)
     model.save('my_model_run_number_{}.h5'.format(options.run))
-
     return model, history
 
 
@@ -97,20 +94,20 @@ def evaluate_model_generator(dg, index, model, options, repeat=5):
 
 def trunc_if_possible(el):
     try:
-        return round(el, decimals=2)
+        return round(el, decimals=4)
     except:
         return el
 
-def fill_table(history, val_scores, scores, table, parameter_dic, validation_number, options):
+def fill_table(train_scores, val_scores, test_scores, table, parameter_dic, validation_number, options):
     train_values = ['loss', 'acc', 'recall', 'precision', 'f1']
     val_values = ['val_' + el for el in train_values]
     test_values = ['test_' + el for el in train_values]
     parameters_values = list(parameter_dic.keys())
     model_values = ['k', 'pooling', 'batch_size', 'size', 
                     'input_depth', 'fold_test', "run_number"]
-    vec_train = [trunc_if_possible(history.history[key][-1]) for key in train_values]
+    vec_train = [trunc_if_possible(el) for el in train_scores]
     vec_validation = [trunc_if_possible(el) for el in val_scores]
-    vec_test = [trunc_if_possible(el) for el in scores]
+    vec_test = [trunc_if_possible(el) for el in test_scores]
     vec_parameters = list(parameter_dic.values())
     vec_model = [options.k, options.pool, 
                  options.batch_size, options.size, 
@@ -126,24 +123,23 @@ def fill_table(history, val_scores, scores, table, parameter_dic, validation_num
 
 def main():
 
-    #config = tf.compat.v1.ConfigProto(log_device_placement=False)
-    #config.gpu_options.allow_growth = True
-    #tf.compat.v1.keras.backend.get_session(tf.compat.v1.Session(config=config))
+    config = tf.compat.v1.ConfigProto(log_device_placement=False)
+    config.gpu_options.allow_growth = True
+    tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
     options = get_options()
     mean = options.mean_name
-    path = os.path.join(options.path, '*.npy')
+    path = options.path
     fold_test = options.fold_test - 1 
     table_name = options.table
     batch_size = options.batch_size
 
-    #Writer
 
     ### data business
     data = data_handler(path, fold_test, 
                         table_name, options.inner_folds, 
                         batch_size, mean, options)
-    columns = ['loss', 'acc', 'recall', 'precision', 'f1',
+    columns = ['loss', 'acc', 'recall', 'precision', 'f1', 
                'val_loss', 'val_acc', 'val_recall', 'val_precision', 'val_f1', 
                 'test_loss', 'test_acc', 'test_recall', 'test_precision', 
                 'test_f1', 
@@ -165,20 +161,24 @@ def main():
             dg_val = data.dg_val(j)
             class_weight = data.weights()
             dg_test, test_index, _ = data.dg_test_index_table()
+
             print("Data Loaded")
 
             print("begin Training", flush=True)
             model, history = train_model(model, dg_train, dg_val, class_weight, options)
             print("end Training")
             print("Evaluating..")
+            scores_train, _ = evaluate_model_generator(dg_train, None, model, 
+                                                     options, repeat=10)
             scores_val, _ = evaluate_model_generator(dg_val, None, model, 
                                                      options, repeat=10)
-            scores, predictions = evaluate_model_generator(dg_test, test_index, model, 
+            scores_test, predictions = evaluate_model_generator(dg_test, test_index, model, 
                                                            options, repeat=10)
-            print("Cleaning up")
-            results_table = fill_table(history, scores, scores_val, results_table, parameter_dic, j, options)
 
-            #tf.compat.v1.keras.backend.clear_session()
+            print("Cleaning up")
+            results_table = fill_table(scores_train, scores_val, scores_test, results_table, parameter_dic, j, options)
+
+            K.clear_session()
             del model
             results_table.to_csv(options.output_name, index=False)
             predictions.to_csv("predictions_run_{}_fold_test_{}.csv".format(options.run, options.fold_test))

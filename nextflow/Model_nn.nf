@@ -1,8 +1,8 @@
 #!/usr/bin/env nextflow
 
-params.PROJECT_NAME = "tcga_tnbc"
-params.PROJECT_VERSION = "tri"
-params.resolution = [0, 1, 2]
+params.PROJECT_NAME = "luminaux_brca"
+params.PROJECT_VERSION = "xml_mask"
+params.resolution = [1]
 r = params.resolution
 params.y_interest = "LST_status"
 
@@ -10,21 +10,22 @@ params.y_interest = "LST_status"
 input_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 
 // labels
-params.label_file = "/mnt/data4/tlazard/data/tcga_tnbc/labels_tcga_tnbc.csv"
+params.label_file = "/mnt/data4/tlazard/data/luminaux_BRCA/labels_luminaux.csv"
 label_file = file(params.label_file)
 
 // Arguments
 params.inner_fold = 5
 inner_fold =  params.inner_fold
 batch_size = 16
-epochs = 40
-repeat = 5
-params.size = 5000
+epochs = 100 
+repeat = 10
+params.size = 1000
 size = params.size
-params.number_of_folds = 10
+params.number_of_folds = 9
 number_of_folds = params.number_of_folds 
-params.model = "conan_a"
+params.model = "model_1S_a"
 model = params.model
+tiling_name = 'imagenet'
 
 process Training_nn {
     publishDir "${output_model_folder}", pattern: "*.h5", overwrite: true
@@ -33,7 +34,7 @@ process Training_nn {
     errorStrategy 'retry'
     maxRetries 6
     cpus 5
-    maxForks 6
+    maxForks 10
     queue 'gpu-cbio'
     clusterOptions "--gres=gpu:1"
     // scratch true
@@ -48,10 +49,10 @@ process Training_nn {
     file("*.h5")
 
     script:
-    input_tiles = file("${input_folder}/tiling/${r}/mat_pca/")
-    mean_file = file("${input_folder}/tiling/${r}/mean_pca/mean.npy")
+    input_tiles = file("${input_folder}/tiling/${tiling_name}/${r}/mat_pca/")
+    mean_file = file("${input_folder}/tiling/${tiling_name}/${r}/mean_pca/mean.npy")
     python_script = file("./python/nn/main.py")
-    output_folder = "${input_folder}/Model_nn_R${r}"
+    output_folder = "${input_folder}/Model_nn_R${r}_depth_256/"
     output_model_folder = file("${output_folder}/${model}/models/")
     output_results_folder = file("${output_folder}/${model}/results/")
 
@@ -69,7 +70,8 @@ process Training_nn {
                           --y_interest $params.y_interest \
                           --inner_folds $inner_fold \
                           --model $model \
-                          --workers 5
+                          --workers 5 \
+                          --input_depth 256
     """
 }
 
