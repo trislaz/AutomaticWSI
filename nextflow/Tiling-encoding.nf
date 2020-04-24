@@ -1,14 +1,22 @@
 #!/usr/bin/env nextflow
 
-params.PROJECT_NAME = "tcga_tnbc"
-params.PROJECT_VERSION = "tri"
+params.PROJECT_NAME = "luminaux_brca"
+params.PROJECT_VERSION = "auto_mask"
 output_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 
-params.tiff_location = "/mnt/data3/pnaylor/Data/Biopsy" // tiff files to process
-params.tissue_bound_annot = "/mnt/data3/pnaylor/Data/Biopsy/tissue_segmentation" // xml folder containing tissue segmentation mask for each patient
+// Parameters of the python file
+params.tiff_location = "/mnt/data4/tlazard/data/luminaux_BRCA/images" // tiff files to process DO NOT end with "/".
+params.tissue_bound_annot = "/mnt/data4/tlazard/data/luminaux_BRCA/annotations/auto" // DO NOT end with "/"
+params.model_name = 'imagenet'
+model_name = params.model_name
+params.model_path = '/mnt/data4/tlazard/projets/simCLR/peter_biopsies/512/1/'
+model_path = params.model_path
+params.size = '224'
+size = params.size
+auto_mask = 1
 
 // input file
-tiff_files = file(params.tiff_location + "/*.svs")
+tiff_files = file(params.tiff_location + "/*.ndpi")
 boundaries_files = file(params.tissue_bound_annot)
 
 //params.label = "/mnt/data3/pnaylor/CellularHeatmaps/outputs/label.csv"
@@ -19,13 +27,13 @@ params.weights = "imagenet"
 weights = params.weights
 
 params.innner_fold = 5
-levels = [0, 1, 2]
+levels = [1, 2, 0]
 
 process WsiTilingEncoding {
-    publishDir "${output_process_mat}", overwrite: true, pattern: "${name}.npy"
-    publishDir "${output_process_mean}", overwrite: true, pattern: "${name}_mean.npy"
-    publishDir "${output_process_info}", overwrite: true, pattern: "${name}_info.txt"
-    publishDir "${output_process_visu}", overwrite: true, pattern: "${name}_visu.png"
+    publishDir "${output_process_mat}", overwrite: true, pattern: "${name}.npy", mode: 'copy'
+    publishDir "${output_process_mean}", overwrite: true, pattern: "${name}_mean.npy", mode: 'copy'
+    publishDir "${output_process_info}", overwrite: true, pattern: "${name}_info.txt", mode: 'copy'
+    publishDir "${output_process_visu}", overwrite: true, pattern: "${name}_visu.png", mode: 'copy'
 
     queue "gpu-cbio"
     clusterOptions "--gres=gpu:1"
@@ -45,17 +53,21 @@ process WsiTilingEncoding {
     script:
     py = file("./python/preparing/process_one_patient.py")
     name = slide.baseName
-    xml_file = file(boundaries_files + "/${name}.xml")
-    output_process_mean = "${output_folder}/tiling/${level}/mean"
-    output_process_mat = "${output_folder}/tiling/${level}/mat"
-    output_process_info = "${output_folder}/tiling/${level}/info"
-    output_process_visu = "${output_folder}/tiling/${level}/visu"
+    mask = boundaries_files + "/${name}"
+    output_process_mean = "${output_folder}/tiling/${model_name}/${level}/mean"
+    output_process_mat = "${output_folder}/tiling/${model_name}/${level}/mat"
+    output_process_info = "${output_folder}/tiling/${model_name}/${level}/info"
+    output_process_visu = "${output_folder}/tiling/${model_name}/${level}/visu"
     """
     module load cuda10.0
     python $py --slide $slide \
-               --xml_file $xml_file \
+               --mask $mask \
                --analyse_level $level \
-               --weight $weights
+               --weight $weights \
+               --model_name $model_name \
+               --model_path $model_path \
+               --size $size \
+               --auto_mask $auto_mask
     """
 }
 
@@ -64,7 +76,7 @@ mean_patient  .groupTuple()
 
 
 process ComputeGlobalMean {
-    publishDir "${output_process}", overwrite: true
+    publishDir "${output_process}", overwrite: true, mode: 'copy'
     memory { 10.GB }
     input:
     set level, file(_) from all_patient_means
@@ -73,7 +85,7 @@ process ComputeGlobalMean {
 
     script:
     compute_mean = file('./python/preparing/compute_mean.py')
-    output_process = "${output_folder}/tiling/$level/mean/"
+    output_process = "${output_folder}/tiling/${model_name}/$level/mean/"
 
     """
     python $compute_mean 
@@ -113,7 +125,7 @@ bags_1 .groupTuple()
      .set{ bags_per_level }
 
 process Incremental_PCA {
-    publishDir "${output_process_pca}", overwrite: true
+    publishDir "${output_process_pca}", overwrite: true, mode: 'copy'
     memory '60GB'
     cpus '16'
 
@@ -124,8 +136,8 @@ process Incremental_PCA {
     tuple level, file("*.joblib") into results_PCA
 
     script:
-    output_process_pca = "${output_folder}/tiling/${level}/pca/"
-    input_tiles = file("${output_folder}/tiling/${level}/mat")
+    output_process_pca = "${output_folder}/tiling/${model_name}/${level}/pca/"
+    input_tiles = file("${output_folder}/tiling/${model_name}/${level}/mat")
     python_script = file("./python/preparing/pca_partial.py")
 
     """
@@ -141,7 +153,7 @@ results_PCA .combine(bags_2, by: 0)
 process Transform_Tiles {
 
     publishDir "${output_mat_pca}", overwrite: true, mode: 'copy'
-    memory '5GB'
+    memory '20GB'
 
     input:
     tuple level, file(pca), tile from files_to_transform
@@ -150,7 +162,7 @@ process Transform_Tiles {
     tuple level, file("*.npy") into transform_tiles
 
     script:
-    output_mat_pca = "${output_folder}/tiling/$level/mat_pca"
+    output_mat_pca = "${output_folder}/tiling/${model_name}/$level/mat_pca"
     python_script = file("./python/preparing/transform_tile.py")
 
     """
@@ -161,7 +173,7 @@ process Transform_Tiles {
 transform_tiles  .groupTuple() 
               .set { transform_tiles_per_level }
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 //process ComputePCAGlobalMean {
 //    publishDir "${output_pca_mean}", overwrite: true
 //    memory { 10.GB }
@@ -180,7 +192,7 @@ transform_tiles  .groupTuple()
 //    python $compute_mean_pca
 //    """
 //}
-=======
+//=======
 process ComputePCAGlobalMean {
     publishDir "${output_pca_mean}", overwrite: true, mode: 'copy'
     memory { 10.GB }
@@ -191,12 +203,12 @@ process ComputePCAGlobalMean {
     file('mean.npy')
 
     script:
-    output_pca_mean = "${output_folder}/tiling/$level/pca_mean"
+    output_pca_mean = "${output_folder}/tiling/${model_name}/$level/pca_mean"
     compute_mean_pca = file('./python/preparing/compute_mean_pca.py')
+    tiles_path = file("${output_folder}/tiling/${model_name}/$level/mat_pca")
 
     """
     echo $level
-    python $compute_mean_pca
+    python $compute_mean_pca --path $tiles_path
     """
 }
->>>>>>> peter

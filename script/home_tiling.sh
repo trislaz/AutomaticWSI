@@ -1,2 +1,2 @@
-nextflow run nextflow/Tiling-encoding.nf -c ~/.nextflow/config -profile mines \
+nextflow run nextflow/Tiling-encoding.nf -resume -c ~/.nextflow/config -profile mines \
                                     

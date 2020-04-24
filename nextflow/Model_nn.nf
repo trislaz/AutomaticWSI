@@ -1,18 +1,19 @@
 #!/usr/bin/env nextflow
 
-params.PROJECT_NAME = "luminaux_brca"
-params.PROJECT_VERSION = "xml_mask"
+params.PROJECT_NAME = "biopsies_pet"
+params.PROJECT_VERSION = "simCLR"
 params.resolution = [1]
 r = params.resolution
-params.y_interest = "LST_status"
+params.y_interest = "Residual"
 
 // Folders
 input_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 
 // labels
-params.label_file = "/mnt/data4/tlazard/data/luminaux_BRCA/labels_luminaux.csv"
+params.label_file = "/mnt/data3/pnaylor/CellularHeatmaps/outputs/label_20_02_20.csv"
 label_file = file(params.label_file)
-
+input_tiles = file("${input_folder}/tiling/simCLR/1/mat/")
+mean_file = file("${input_folder}/tiling/simCLR/1/mean/mean.npy")
 // Arguments
 params.inner_fold = 5
 inner_fold =  params.inner_fold
@@ -28,13 +29,13 @@ model = params.model
 tiling_name = 'imagenet'
 
 process Training_nn {
-    publishDir "${output_model_folder}", pattern: "*.h5", overwrite: true
-    publishDir "${output_results_folder}", pattern: "*.csv", overwrite: true
+    publishDir "${output_model_folder}", pattern: "*.h5", overwrite: true, mode: 'copy'
+    publishDir "${output_results_folder}", pattern: "*.csv", overwrite: true, mode: 'copy'
     memory { 30.GB + 5.GB * (task.attempt - 1) }
     errorStrategy 'retry'
     maxRetries 6
     cpus 5
-    maxForks 10
+    maxForks 4
     queue 'gpu-cbio'
     clusterOptions "--gres=gpu:1"
     // scratch true
@@ -75,3 +76,4 @@ process Training_nn {
     """
 }
 
+    

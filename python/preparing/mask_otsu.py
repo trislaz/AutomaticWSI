@@ -108,6 +108,54 @@ def make_label(xml_file, rgb_img):
 
     return res
 
+
+def get_polygon(path_xml, label):
+    """Alternative to make_label, extracting polygons with a certain label
+    
+    Parameters
+    ----------
+    path_xml : str  
+        path to the xml file
+    label : str
+        name of the polygone to use as a mask
+    
+    Returns
+    -------
+    np.array
+        mask, 0 or 1 float array
+    
+    Raises
+    ------
+    ValueError
+        the entered label does not exist in the xml file
+    """
+    
+    doc = minidom.parse(path_xml).childNodes[0]
+    nrows = doc.getElementsByTagName('imagesize')[0].getElementsByTagName('nrows')[0].firstChild.data
+    ncols = doc.getElementsByTagName('imagesize')[0].getElementsByTagName('ncols')[0].firstChild.data
+    size_image = (int(nrows), int(ncols))
+    mask = np.zeros(size_image)
+    obj = doc.getElementsByTagName('object')
+    polygons = []
+    for o in obj:
+        if o.getElementsByTagName('name')[0].firstChild.data == label:
+            polygons += o.getElementsByTagName('polygon')
+            print(polygons)
+    if not polygons:
+        raise ValueError('There is no annotation with label {}'.format(label))
+
+    for poly in polygons:
+        rows = []
+        cols = []
+        for point in poly.getElementsByTagName('pt'):
+            x = int(point.getElementsByTagName('x')[0].firstChild.data)
+            y = int(point.getElementsByTagName('y')[0].firstChild.data)
+            rows.append(y)
+            cols.append(x)
+        rr, cc = polygon(rows, cols)
+        mask[rr, cc] = 1
+    return mask
+
 to_light_images = ["565330", 
                    "556426",
                    "555029",
@@ -131,7 +179,7 @@ def change_thresh(thresh, xml_file):
     return thresh
 
 def make_label_with_otsu(xml_file, rgb_img):
-    mask = make_label(xml_file, rgb_img)
+    mask = get_polygon(xml_file, label='t')
     grey_rgb = rgb2gray(rgb_img)
     thresh = threshold_otsu(grey_rgb, mask, nbins=256)
     
