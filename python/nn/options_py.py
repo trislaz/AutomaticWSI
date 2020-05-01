@@ -72,10 +72,6 @@ def get_options():
     args.max_queue_size = 10
     args.use_multiprocessing = args.multi_processing == 1
     print(args.use_multiprocessing)
-<<<<<<< HEAD
-=======
-    args.input_depth = 2048
->>>>>>> 0ae38c5ef30c12645ec42b10344e95d1bec1dd15
 
     args.learning_rate_start = -6
     args.learning_rate_stop = 1

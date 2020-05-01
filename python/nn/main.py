@@ -41,7 +41,7 @@ def sample_hyperparameters(options, validation_fold):
     dic["learning_rate"] = 0.001#log_sample(options.learning_rate_start, options.learning_rate_stop)
     dic["weight_decay"] = 0.001#log_sample(options.weight_decay_start, options.weight_decay_stop)
     dic["gaussian_noise"] = random.uniform() if options.gaussian_noise else 0
-    dic["drop_out"] = 0.001#random.uniform(low=0.0, high=0.5)
+    dic["drop_out"] = 0.1#random.uniform(low=0.0, high=0.5)
     dic["hidden_fcn"] = 128#andom.choice(options.hidden_fcn_list)
     dic["hidden_btleneck"] = 64#random.choice(options.hidden_btleneck_list)
     return dic

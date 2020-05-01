@@ -109,7 +109,7 @@ def make_label(xml_file, rgb_img):
     return res
 
 
-def get_polygon(path_xml, label):
+def get_polygon(path_xml, label, rgb_img):
     """Alternative to make_label, extracting polygons with a certain label
     
     Parameters
@@ -133,7 +133,9 @@ def get_polygon(path_xml, label):
     doc = minidom.parse(path_xml).childNodes[0]
     nrows = doc.getElementsByTagName('imagesize')[0].getElementsByTagName('nrows')[0].firstChild.data
     ncols = doc.getElementsByTagName('imagesize')[0].getElementsByTagName('ncols')[0].firstChild.data
-    size_image = (int(nrows), int(ncols))
+    row_max, col_max = rgb_img.shape[0:2]
+    size_image = (int(row_max), int(col_max))
+    res = np.zeros((row_max, col_max))
     mask = np.zeros(size_image)
     obj = doc.getElementsByTagName('object')
     polygons = []
@@ -179,7 +181,7 @@ def change_thresh(thresh, xml_file):
     return thresh
 
 def make_label_with_otsu(xml_file, rgb_img):
-    mask = get_polygon(xml_file, label='t')
+    mask = get_polygon(xml_file, label='t', rgb_img=rgb_img)
     grey_rgb = rgb2gray(rgb_img)
     thresh = threshold_otsu(grey_rgb, mask, nbins=256)
     

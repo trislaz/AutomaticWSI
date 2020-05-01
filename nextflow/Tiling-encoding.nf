@@ -1,19 +1,19 @@
 #!/usr/bin/env nextflow
 
 params.PROJECT_NAME = "luminaux_brca"
-params.PROJECT_VERSION = "auto_mask"
+params.PROJECT_VERSION = "xml_mask"
 output_folder = "./outputs/${params.PROJECT_NAME}_${params.PROJECT_VERSION}"
 
 // Parameters of the python file
 params.tiff_location = "/mnt/data4/tlazard/data/luminaux_BRCA/images" // tiff files to process DO NOT end with "/".
-params.tissue_bound_annot = "/mnt/data4/tlazard/data/luminaux_BRCA/annotations/auto" // DO NOT end with "/"
+params.tissue_bound_annot = "/mnt/data4/tlazard/data/luminaux_BRCA/annotations/xml_guillaume" // DO NOT end with "/"
 params.model_name = 'imagenet'
 model_name = params.model_name
 params.model_path = '/mnt/data4/tlazard/projets/simCLR/peter_biopsies/512/1/'
 model_path = params.model_path
 params.size = '224'
 size = params.size
-auto_mask = 1
+auto_mask = 0
 
 // input file
 tiff_files = file(params.tiff_location + "/*.ndpi")
